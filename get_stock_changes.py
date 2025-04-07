@@ -117,60 +117,36 @@ def adjust_ticker_for_yfinance(ticker):
     # Default: Assume US ticker (e.g., RTX, LMT, NOC, GE, LHX, BA, ABT, JNJ etc.)
     return ticker
 
-# Cache the price fetching for each ticker
+# Function to fetch price data, designed to always return a dict
 @st.cache_data(ttl=900)
-def get_stock_data_for_ticker(adjusted_ticker):
-    """Fetches historical data for a single ticker and calculates changes.
-       Bypasses the stock.info check due to reliability issues on deployment.
-    """
+def fetch_price_data(adjusted_ticker):
+    """Fetches price data for a ticker, returns dict with data or error."""
     print(f"Fetching data for {adjusted_ticker}...")
     stock = None
-    # Default return structure in case of any failure
-    default_error_return = {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Unknown Fetch Error"}
-
-    # --- Try initializing Ticker --- 
     try:
         stock = yf.Ticker(adjusted_ticker)
         if stock is None:
-            print(f"Critical Error: yf.Ticker returned None for {adjusted_ticker}")
-            default_error_return["error"] = "Ticker Init Failed (Returned None)"
-            return default_error_return
-        print(f"  Ticker object created for {adjusted_ticker}.")
+             raise ValueError("yf.Ticker returned None")
 
-    except Exception as e:
-        error_message = f"Ticker Init Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}"
-        print(f"Failed to initialize Ticker for {adjusted_ticker}. Error: {error_message}")
-        default_error_return["error"] = error_message
-        return default_error_return
-
-    # --- Try fetching history directly --- 
-    try:
-        print(f"  Attempting history fetch for {adjusted_ticker}...")
         now_aware = datetime.now(timezone.utc)
         today_date = now_aware.date()
         date_5d_ago = (pd.to_datetime(now_aware) - BDay(5)).date()
         date_1mo_ago = (pd.to_datetime(now_aware) - DateOffset(months=1)).date()
 
         price_today = get_closest_price_yf(stock, today_date)
-        # If we can't even get today's price, consider it a failure for this ticker
-        if price_today is None:
-            print(f"  Failed to get current price for {adjusted_ticker}. Marking as error.")
-            default_error_return["error"] = "History Fetch Failed (Current Price)"
-            return default_error_return
+        if price_today is None: # If current price fails, report as error
+            raise ValueError("Failed to get current price")
             
         price_5d = get_closest_price_yf(stock, date_5d_ago)
         price_1mo = get_closest_price_yf(stock, date_1mo_ago)
-        print(f"  History fetch completed for {adjusted_ticker}.")
 
-        # --- Calculate Changes --- 
         change_5d_pct = None
         change_1mo_pct = None
-        if price_today is not None and price_5d is not None:
+        if price_5d is not None:
             if price_5d != 0: change_5d_pct = ((price_today - price_5d) / price_5d) * 100
             elif price_today == 0: change_5d_pct = 0.0
             else: change_5d_pct = float('inf')
-        if price_today is not None and price_1mo is not None:
+        if price_1mo is not None:
             if price_1mo != 0: change_1mo_pct = ((price_today - price_1mo) / price_1mo) * 100
             elif price_1mo == 0: change_1mo_pct = 0.0
             else: change_1mo_pct = float('inf')
@@ -181,15 +157,17 @@ def get_stock_data_for_ticker(adjusted_ticker):
             "1mo_ago_price": price_1mo,
             "change_5d": change_5d_pct,
             "change_1mo": change_1mo_pct,
-            "error": None # Indicate success
+            "error": None
         }
 
     except Exception as e:
-        error_message = f"History Fetch Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}"
-        print(f"Failed to get price history for {adjusted_ticker}. Error: {error_message}")
-        # Return default prices but with specific history error
-        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
+        error_message = f"{type(e).__name__}: {str(e)}"
+        print(f"Failed for {adjusted_ticker}: {error_message}")
+        return {
+            "today_price": None, "5d_ago_price": None, "1mo_ago_price": None,
+            "change_5d": None, "change_1mo": None,
+            "error": error_message
+        }
 
 def get_closest_price_yf(ticker_obj, target_date):
     """Gets the closing price for the closest trading day on or before the target date."""
@@ -236,114 +214,111 @@ if not categories:
     st.warning("Could not load categories or tickers from markdown file.")
     st.stop()
 
-# Prepare data structure to hold results
-results = {cat: {} for cat in categories}
-failed_tickers = []
-processed_tickers_info = {} # Store info for all processed tickers
+# Structure to hold all data: {category: [ {company_info..., price_data...}, ... ], ...}
+all_data = {cat_name: [] for cat_name in categories}
+failed_ticker_errors = {}
 
-# Fetch data for all tickers
-with st.spinner("Fetching latest stock data..."):
-    unique_tickers_to_fetch = set()
-    for category, ticker_info_list in categories.items():
-        for ticker_info in ticker_info_list:
-            raw_ticker = ticker_info['ticker']
+with st.spinner("Fetching and processing stock data..."):
+    # Process each company defined in the markdown file
+    for category_name, companies_list in categories.items():
+        for company_info in companies_list:
+            raw_ticker = company_info['ticker']
             adjusted_ticker = adjust_ticker_for_yfinance(raw_ticker)
-            if adjusted_ticker:
-                unique_tickers_to_fetch.add((adjusted_ticker, raw_ticker, ticker_info['company_name'], ticker_info['industry']))
+            
+            # Fetch price data - this function is cached and handles internal errors
+            price_data = fetch_price_data(adjusted_ticker)
+            
+            # Combine company info and price data
+            combined_data = {
+                **company_info, # ticker, company_name, industry
+                "adjusted_ticker": adjusted_ticker,
+                **price_data # price/change data + error field
+            }
+            all_data[category_name].append(combined_data)
+            
+            # Record errors if any occurred during fetch
+            if price_data["error"]:
+                failed_ticker_errors[adjusted_ticker] = price_data["error"]
 
-    for adjusted_ticker, raw_ticker, company_name, industry in unique_tickers_to_fetch:
-        stock_data = get_stock_data_for_ticker(adjusted_ticker)
-        processed_tickers_info[adjusted_ticker] = {
-            **stock_data,
-            "raw_ticker": raw_ticker,
-            "company_name": company_name,
-            "industry": industry
-        }
-        if stock_data["error"]:
-             failed_tickers.append(f"{adjusted_ticker} ({stock_data['error']})")
-
-# Organize results by category
-for category, ticker_info_list in categories.items():
-    for ticker_info in ticker_info_list:
-        raw_ticker = ticker_info['ticker']
-        adjusted_ticker = adjust_ticker_for_yfinance(raw_ticker)
-        if adjusted_ticker in processed_tickers_info:
-            results[category][adjusted_ticker] = processed_tickers_info[adjusted_ticker]
-
-# Calculate category averages
-category_averages = {}
-summary_data_list = [] # Use a list of dicts first
-for category, tickers_data in results.items():
-    valid_5d_changes = [data.get('change_5d') for data in tickers_data.values() if data.get('change_5d') is not None and data.get('change_5d') != float('inf')]
-    valid_1mo_changes = [data.get('change_1mo') for data in tickers_data.values() if data.get('change_1mo') is not None and data.get('change_1mo') != float('inf')]
-
-    avg_5d = statistics.mean(valid_5d_changes) if valid_5d_changes else None
-    avg_1mo = statistics.mean(valid_1mo_changes) if valid_1mo_changes else None
-
-    category_averages[category] = {"avg_5d": avg_5d, "avg_1mo": avg_1mo}
+# --- Calculate Averages (Slightly adjusted logic) ---
+summary_data_list = []
+for category_name, company_data_list in all_data.items():
+    valid_5d = [d['change_5d'] for d in company_data_list if d.get('change_5d') is not None and d.get('change_5d') != float('inf')]
+    valid_1mo = [d['change_1mo'] for d in company_data_list if d.get('change_1mo') is not None and d.get('change_1mo') != float('inf')]
+    
+    avg_5d = statistics.mean(valid_5d) if valid_5d else None
+    avg_1mo = statistics.mean(valid_1mo) if valid_1mo else None
+    
     summary_data_list.append({
-        "Category": category,
-        "Avg 5d Change (%)": avg_5d, # Keep as number for styling
-        "Avg 1mo Change (%)": avg_1mo # Keep as number for styling
+        "Category": category_name,
+        "Avg 5d Change (%)": avg_5d,
+        "Avg 1mo Change (%)": avg_1mo
     })
 
-# --- Display Dashboard ---
+# --- Display Dashboard (Adjusted to show errors) ---
 st.header("📊 Category Performance Summary")
 if summary_data_list:
     summary_df = pd.DataFrame(summary_data_list).set_index("Category")
-    # Apply styling and formatting
     st.dataframe(
         summary_df.style
         .applymap(style_negative_red, subset=["Avg 5d Change (%)", "Avg 1mo Change (%)"])
-        .format({ # Format numbers after styling
-            "Avg 5d Change (%)": "{:.2f}%",
-            "Avg 1mo Change (%)": "{:.2f}%"
-        }, na_rep="N/A"),
+        .format({"Avg 5d Change (%)": "{:.2f}%", "Avg 1mo Change (%)": "{:.2f}%"}, na_rep="N/A"),
         use_container_width=True
     )
-else:
-    st.write("No summary data available.")
 
 # Display tables for each category
-for category, tickers_data in results.items():
-    st.header(f"📁 {category}")
-    category_df_data = []
-    sorted_tickers_keys = sorted(tickers_data.keys())
-    for adjusted_ticker in sorted_tickers_keys:
-        data = tickers_data[adjusted_ticker]
-        category_df_data.append({
-            "Company Name": data.get('company_name', 'N/A'),
-            "Industry": data.get('industry', 'N/A'),
-            "Ticker": adjusted_ticker,
-            # Keep price as number for potential future styling, format later
-            "Current Price": data['today_price'],
-            # Keep changes as numbers for styling
-            "5d Change (%)": data['change_5d'],
-            "1mo Change (%)": data['change_1mo']
-        })
-
-    if category_df_data:
-        category_df = pd.DataFrame(category_df_data).set_index("Company Name")
-        # Apply styling and formatting
+for category_name, company_data_list in all_data.items():
+    st.header(f"📁 {category_name}")
+    category_display_list = []
+    # Sort by company name for display
+    sorted_company_data = sorted(company_data_list, key=lambda x: x['company_name'])
+    
+    for data in sorted_company_data:
+        if data["error"]:
+            # If there was an error fetching data, display it
+            category_display_list.append({
+                "Company Name": data['company_name'],
+                "Industry": data['industry'],
+                "Ticker": data['adjusted_ticker'],
+                "Current Price": data["error"],
+                "5d Change (%)": "Error",
+                "1mo Change (%)": "Error"
+            })
+        else:
+            # Otherwise, display the data
+            category_display_list.append({
+                "Company Name": data['company_name'],
+                "Industry": data['industry'],
+                "Ticker": data['adjusted_ticker'],
+                "Current Price": data['today_price'],
+                "5d Change (%)": data['change_5d'],
+                "1mo Change (%)": data['change_1mo']
+            })
+            
+    if category_display_list:
+        category_df = pd.DataFrame(category_display_list).set_index("Company Name")
+        # Apply formatting, including error display
         st.dataframe(
             category_df.style
             .applymap(style_negative_red, subset=["5d Change (%)", "1mo Change (%)"])
             .format({
-                "Current Price": "{:.2f}",
-                "5d Change (%)": "{:.2f}%",
-                "1mo Change (%)": "{:.2f}%"
+                "Current Price": lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else x, # Format price only if number
+                "5d Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else x,
+                "1mo Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else x
             }, na_rep="N/A"),
             use_container_width=True
         )
     else:
-        st.write("No data available for this category.")
+        st.write("No companies listed in this category.")
 
-# Display failed tickers if any
-if failed_tickers:
-    st.warning("Failed to fetch or process data for some tickers:")
-    st.json(failed_tickers) # Display as JSON for clarity
+# Display failed tickers summary (using the collected errors)
+if failed_ticker_errors:
+    st.warning("Failed to fetch price data for some tickers:")
+    # Convert dict to list of strings for better display
+    error_list = [f"{ticker}: {error}" for ticker, error in failed_ticker_errors.items()]
+    st.json(error_list) 
 
-# --- Auto-Refresh Logic (Removed - Relying on Cache TTL) ---
+# --- Cache Info & Load Time ---
 st.caption(f"Stock data cache TTL: 900s | Markdown cache TTL: 3600s")
 st.caption(f"Page last loaded/executed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
