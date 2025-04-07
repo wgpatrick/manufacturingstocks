@@ -124,35 +124,52 @@ def get_stock_data_for_ticker(adjusted_ticker):
     print(f"Fetching data for {adjusted_ticker}...")
     stock_info = None
     stock = None
+    # Default return structure in case of any failure
+    default_error_return = {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Unknown Fetch Error"}
 
-    # --- Try initializing Ticker and getting info --- 
+    # --- Try initializing Ticker --- 
     try:
         stock = yf.Ticker(adjusted_ticker)
-        # Some tickers might exist but have no info immediately available
-        # Give it a short time before failing
-        stock_info = stock.info 
-        # Check essential data points
-        if not stock_info or (stock_info.get('marketState') is None and stock_info.get('regularMarketPrice') is None and stock_info.get('currency') is None):
-             print(f"Skipping {adjusted_ticker} (invalid/missing essential market data in info)")
-             return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Invalid/Missing Info"}
+        if stock is None:
+            # This case is highly improbable but included for extreme safety
+            print(f"Critical Error: yf.Ticker returned None for {adjusted_ticker}")
+            default_error_return["error"] = "Ticker Init Failed (Returned None)"
+            return default_error_return
+        print(f"  Ticker object created for {adjusted_ticker}.")
 
     except Exception as e:
-        # Simpler error reporting for robustness
-        error_message = f"Info Fetch Error: {type(e).__name__}" 
-        if hasattr(e, 'args') and e.args:
-            error_message += f" - {e.args[0]}" # Add first arg if available
-        print(f"Failed to initialize or get info for {adjusted_ticker}. Error: {error_message}")
-        stock = None 
-        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
+        error_message = f"Ticker Init Error: {type(e).__name__}"
+        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
+        print(f"Failed to initialize Ticker for {adjusted_ticker}. Error: {error_message}")
+        default_error_return["error"] = error_message
+        return default_error_return
 
-    # --- If Info fetch succeeded, try fetching history --- 
-    # Check if stock object exists (it should if info succeeded, but double-check)
-    if stock is None:
-         print(f"Error: Stock object is None for {adjusted_ticker} despite info check passing?!")
-         return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Internal State Error"}
-         
+    # --- Try getting info --- 
     try:
-        # Calculate target dates (relative to now, timezone-aware)
+        stock_info = stock.info
+        # Check if stock_info itself is None, which might trigger the error if not caught
+        if stock_info is None:
+            print(f"  Info is None for {adjusted_ticker}. Skipping.")
+            default_error_return["error"] = "Info Fetch Returned None"
+            return default_error_return
+            
+        print(f"  Fetched info for {adjusted_ticker}. Market State: {stock_info.get('marketState')}") 
+        # Check essential data points more carefully
+        if (stock_info.get('marketState') is None and stock_info.get('regularMarketPrice') is None and stock_info.get('currency') is None):
+             print(f"  Skipping {adjusted_ticker} (invalid/missing essential data in fetched info)")
+             default_error_return["error"] = "Invalid/Missing Info Data"
+             return default_error_return
+
+    except Exception as e:
+        error_message = f"Info Fetch Error: {type(e).__name__}"
+        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
+        print(f"Failed to get info for {adjusted_ticker}. Error: {error_message}")
+        default_error_return["error"] = error_message
+        return default_error_return
+        
+    # --- Try fetching history --- 
+    try:
+        print(f"  Attempting history fetch for {adjusted_ticker}...")
         now_aware = datetime.now(timezone.utc)
         today_date = now_aware.date()
         date_5d_ago = (pd.to_datetime(now_aware) - BDay(5)).date()
@@ -161,7 +178,8 @@ def get_stock_data_for_ticker(adjusted_ticker):
         price_today = get_closest_price_yf(stock, today_date)
         price_5d = get_closest_price_yf(stock, date_5d_ago)
         price_1mo = get_closest_price_yf(stock, date_1mo_ago)
-        
+        print(f"  History fetch completed for {adjusted_ticker}.")
+
         # --- Calculate Changes --- 
         change_5d_pct = None
         change_1mo_pct = None
@@ -171,7 +189,7 @@ def get_stock_data_for_ticker(adjusted_ticker):
             else: change_5d_pct = float('inf')
         if price_today is not None and price_1mo is not None:
             if price_1mo != 0: change_1mo_pct = ((price_today - price_1mo) / price_1mo) * 100
-            elif price_today == 0: change_1mo_pct = 0.0
+            elif price_1mo == 0: change_1mo_pct = 0.0
             else: change_1mo_pct = float('inf')
 
         return {
@@ -182,13 +200,12 @@ def get_stock_data_for_ticker(adjusted_ticker):
             "change_1mo": change_1mo_pct,
             "error": None # Indicate success
         }
-        
+
     except Exception as e:
-        # Simpler error reporting for robustness
         error_message = f"History Fetch Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args:
-            error_message += f" - {e.args[0]}"
+        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
         print(f"Failed to get price history for {adjusted_ticker}. Error: {error_message}")
+        # Return default prices but with specific history error
         return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
 
 def get_closest_price_yf(ticker_obj, target_date):
