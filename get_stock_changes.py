@@ -120,9 +120,10 @@ def adjust_ticker_for_yfinance(ticker):
 # Cache the price fetching for each ticker
 @st.cache_data(ttl=900)
 def get_stock_data_for_ticker(adjusted_ticker):
-    """Fetches historical data for a single ticker and calculates changes."""
+    """Fetches historical data for a single ticker and calculates changes.
+       Bypasses the stock.info check due to reliability issues on deployment.
+    """
     print(f"Fetching data for {adjusted_ticker}...")
-    stock_info = None
     stock = None
     # Default return structure in case of any failure
     default_error_return = {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Unknown Fetch Error"}
@@ -131,7 +132,6 @@ def get_stock_data_for_ticker(adjusted_ticker):
     try:
         stock = yf.Ticker(adjusted_ticker)
         if stock is None:
-            # This case is highly improbable but included for extreme safety
             print(f"Critical Error: yf.Ticker returned None for {adjusted_ticker}")
             default_error_return["error"] = "Ticker Init Failed (Returned None)"
             return default_error_return
@@ -139,35 +139,12 @@ def get_stock_data_for_ticker(adjusted_ticker):
 
     except Exception as e:
         error_message = f"Ticker Init Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
+        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}"
         print(f"Failed to initialize Ticker for {adjusted_ticker}. Error: {error_message}")
         default_error_return["error"] = error_message
         return default_error_return
 
-    # --- Try getting info --- 
-    try:
-        stock_info = stock.info
-        # Check if stock_info itself is None, which might trigger the error if not caught
-        if stock_info is None:
-            print(f"  Info is None for {adjusted_ticker}. Skipping.")
-            default_error_return["error"] = "Info Fetch Returned None"
-            return default_error_return
-            
-        print(f"  Fetched info for {adjusted_ticker}. Market State: {stock_info.get('marketState')}") 
-        # Check essential data points more carefully
-        if (stock_info.get('marketState') is None and stock_info.get('regularMarketPrice') is None and stock_info.get('currency') is None):
-             print(f"  Skipping {adjusted_ticker} (invalid/missing essential data in fetched info)")
-             default_error_return["error"] = "Invalid/Missing Info Data"
-             return default_error_return
-
-    except Exception as e:
-        error_message = f"Info Fetch Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
-        print(f"Failed to get info for {adjusted_ticker}. Error: {error_message}")
-        default_error_return["error"] = error_message
-        return default_error_return
-        
-    # --- Try fetching history --- 
+    # --- Try fetching history directly --- 
     try:
         print(f"  Attempting history fetch for {adjusted_ticker}...")
         now_aware = datetime.now(timezone.utc)
@@ -176,6 +153,12 @@ def get_stock_data_for_ticker(adjusted_ticker):
         date_1mo_ago = (pd.to_datetime(now_aware) - DateOffset(months=1)).date()
 
         price_today = get_closest_price_yf(stock, today_date)
+        # If we can't even get today's price, consider it a failure for this ticker
+        if price_today is None:
+            print(f"  Failed to get current price for {adjusted_ticker}. Marking as error.")
+            default_error_return["error"] = "History Fetch Failed (Current Price)"
+            return default_error_return
+            
         price_5d = get_closest_price_yf(stock, date_5d_ago)
         price_1mo = get_closest_price_yf(stock, date_1mo_ago)
         print(f"  History fetch completed for {adjusted_ticker}.")
@@ -203,7 +186,7 @@ def get_stock_data_for_ticker(adjusted_ticker):
 
     except Exception as e:
         error_message = f"History Fetch Error: {type(e).__name__}"
-        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}" # Use str()
+        if hasattr(e, 'args') and e.args: error_message += f" - {str(e.args[0])}"
         print(f"Failed to get price history for {adjusted_ticker}. Error: {error_message}")
         # Return default prices but with specific history error
         return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
