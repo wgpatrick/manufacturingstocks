@@ -197,9 +197,14 @@ def get_closest_price_yf(ticker_obj, target_date):
 
 # --- Styling Function --- 
 def style_negative_red(value):
-    """Styles negative numbers red and positive numbers green."""
-    if value is None or pd.isna(value):
-        return '' # No style for N/A
+    """Styles negative numbers red and positive numbers green.
+       Returns empty string for non-numeric types or None.
+    """
+    # Check if value is None or not a number first
+    if value is None or pd.isna(value) or not isinstance(value, (int, float)):
+        return '' # No style for N/A or non-numeric
+    
+    # Now we know it's a number
     color = 'red' if value < 0 else 'green' if value > 0 else 'black' # Black for zero
     return f'color: {color}'
 
