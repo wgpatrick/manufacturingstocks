@@ -285,9 +285,9 @@ for category_name, company_data_list in all_data.items():
                 "Company Name": data['company_name'],
                 "Industry": data['industry'],
                 "Ticker": data['adjusted_ticker'],
-                "Current Price": data["error"],
-                "5d Change (%)": "Error",
-                "1mo Change (%)": "Error"
+                "Current Price": data["error"], # Put error string here
+                "5d Change (%)": "Error",      # Use simple string for errors in % cols
+                "1mo Change (%)": "Error"      # Use simple string for errors in % cols
             })
         else:
             # Otherwise, display the data
@@ -295,21 +295,31 @@ for category_name, company_data_list in all_data.items():
                 "Company Name": data['company_name'],
                 "Industry": data['industry'],
                 "Ticker": data['adjusted_ticker'],
-                "Current Price": data['today_price'],
-                "5d Change (%)": data['change_5d'],
-                "1mo Change (%)": data['change_1mo']
+                "Current Price": data['today_price'], # Keep number
+                "5d Change (%)": data['change_5d'],   # Keep number
+                "1mo Change (%)": data['change_1mo'] # Keep number
             })
             
     if category_display_list:
         category_df = pd.DataFrame(category_display_list).set_index("Company Name")
+        
+        # --- Explicitly set dtype to object for columns that might contain error strings ---
+        try:
+            category_df['Current Price'] = category_df['Current Price'].astype(object)
+            category_df['5d Change (%)'] = category_df['5d Change (%)'].astype(object)
+            category_df['1mo Change (%)'] = category_df['1mo Change (%)'].astype(object)
+        except Exception as e:
+            st.error(f"Error converting column types for category '{category_name}': {e}")
+            # Continue without conversion if it fails, might still hit Arrow error
+
         # Apply formatting, including error display
         st.dataframe(
             category_df.style
             .applymap(style_negative_red, subset=["5d Change (%)", "1mo Change (%)"])
             .format({
-                "Current Price": lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else x, # Format price only if number
-                "5d Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else x,
-                "1mo Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else x
+                "Current Price": lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x), # Format price or show error string
+                "5d Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else str(x),
+                "1mo Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else str(x)
             }, na_rep="N/A"),
             use_container_width=True
         )
