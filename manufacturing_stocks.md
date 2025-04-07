@@ -18,15 +18,20 @@ These companies are based in the U.S. and rely largely on domestically sourced i
 
 This bundle comprises U.S.-based companies that perform final assembly or manufacturing in the U.S., but depend heavily on foreign suppliers for components or materials. Industries like automotive, aerospace, and medical devices are notable here. These firms have complex, global supply chains feeding their U.S. production.
 
-| Company (Ticker)        | Industry           | Exchange |
-|-------------------------|--------------------|----------|
-| Ford Motor Co. (F)      | Automobiles        | NYSE     |
-| Boeing (BA)             | Aerospace          | NYSE     |
-| Medtronic (MDT)         | Medical Devices    | NYSE     |
-| Whirlpool Corp (WHR)    | Home Appliances    | NYSE     |
-| Harley-Davidson (HOG)   | Motorcycles        | NYSE     |
-| Stryker Corp. (SYK)     | Medical Devices    | NYSE     |
-| Oshkosh Corp. (OSK)     | Specialty Vehicles | NYSE     |
+| Company (Ticker)               | Industry           | Exchange |
+|--------------------------------|--------------------|----------|
+| Ford Motor Co. (F)             | Automobiles        | NYSE     |
+| Boeing (BA)                    | Aerospace          | NYSE     |
+| Medtronic (MDT)                | Medical Devices    | NYSE     |
+| Whirlpool Corp (WHR)           | Home Appliances    | NYSE     |
+| Harley-Davidson (HOG)          | Motorcycles        | NYSE     |
+| Stryker Corp. (SYK)            | Medical Devices    | NYSE     |
+| Oshkosh Corp. (OSK)            | Specialty Vehicles | NYSE     |
+| Abbott Laboratories (ABT)      | Medical Devices    | NYSE     |
+| Becton, Dickinson (BDX)        | Medical Devices    | NYSE     |
+| Baxter International (BAX)     | Medical Devices    | NYSE     |
+| Johnson & Johnson (JNJ)        | MedTech/Pharma     | NYSE     |
+| GE HealthCare (GEHC)           | Medical Devices    | NASDAQ   |
 
 ## 3. U.S. Companies – Overseas Manufacturing for U.S. Market
 
@@ -57,6 +62,7 @@ This bundle includes foreign-based companies that manufacture outside the U.S. (
 | Honda Motor Co. (7267)       | Automotive           | TYO (Japan), NYSE (ADR)   |
 | Nissan Motor Co. (7201)      | Automotive           | TYO (Japan), OTC (ADR)    |
 | Hyundai Motor Co. (005380)   | Automotive           | KRX (S. Korea)            |
+| Philips N.V. (PHG)           | Health Technology    | NYSE (ADR), AMS (Primary) |
 
 ## 5. Non-U.S. Companies – Overseas Manufacturing, Little U.S. Market Focus
 
