@@ -27,15 +27,10 @@ This bundle comprises U.S.-based companies that perform final assembly or manufa
 | Harley-Davidson (HOG)          | Motorcycles        | NYSE     |
 | Stryker Corp. (SYK)            | Medical Devices    | NYSE     |
 | Oshkosh Corp. (OSK)            | Specialty Vehicles | NYSE     |
-| Abbott Laboratories (ABT)      | Medical Devices    | NYSE     |
-| Becton, Dickinson (BDX)        | Medical Devices    | NYSE     |
-| Baxter International (BAX)     | Medical Devices    | NYSE     |
-| Johnson & Johnson (JNJ)        | MedTech/Pharma     | NYSE     |
-| GE HealthCare (GEHC)           | Medical Devices    | NASDAQ   |
 
 ## 3. U.S. Companies – Overseas Manufacturing for U.S. Market
 
-This category covers U.S. companies that outsource or locate the majority of manufacturing overseas, then import finished goods into the U.S. for sale. These firms often design products domestically but utilize lower-cost manufacturing abroad. They primarily serve the U.S. market (often alongside other international markets). Sectors include consumer electronics, apparel, toys, etc.
+This category covers U.S. companies that rely **primarily on overseas manufacturing** (either outsourced or company-owned facilities) to produce goods for the U.S. market. While some manufacturing or assembly presence may exist in the **US**, the company **depends mostly on foreign manufacturing locations** for products sold domestically. These firms often design products domestically but utilize lower-cost manufacturing abroad. They primarily serve the U.S. market (often alongside other international markets). Sectors include consumer electronics, apparel, toys, MedTech, etc.
 
 | Company (Ticker)        | Industry             | Exchange |
 |-------------------------|----------------------|----------|
@@ -45,6 +40,11 @@ This category covers U.S. companies that outsource or locate the majority of man
 | Crocs, Inc. (CROX)      | Footwear             | NASDAQ   |
 | YETI Holdings (YETI)    | Consumer Durables    | NYSE     |
 | Funko, Inc. (FNKO)      | Toys/Collectibles    | NASDAQ   |
+| Abbott Laboratories (ABT)| Medical Devices    | NYSE     |
+| Becton, Dickinson (BDX)| Medical Devices    | NYSE     |
+| Baxter International (BAX)| Medical Devices    | NYSE     |
+| Johnson & Johnson (JNJ) | MedTech/Pharma     | NYSE     |
+| GE HealthCare (GEHC)    | Medical Devices    | NASDAQ   |
 
 ## 4. Non-U.S. Companies – Overseas Manufacturing, Serving U.S. Market
 
