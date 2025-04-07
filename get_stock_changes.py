@@ -80,12 +80,15 @@ def adjust_ticker_for_yfinance(ticker):
     if ticker == 'ITX': return 'ITX.MC'
     if ticker == 'M&M': return 'M&M.NS'
     if ticker == 'RIL': return 'RELIANCE.NS'
-    if any(ticker.endswith(s) for s in ['.HK', '.PA', '.T', '.KS', '.SW', '.DE', '.MC', '.NS']):
+    if ticker == '600104': return '600104.SS' # Added SAIC Motor
+
+    # If it ends with a known suffix, assume it's already correct
+    if any(ticker.endswith(s) for s in ['.HK', '.PA', '.T', '.KS', '.SW', '.DE', '.MC', '.NS', '.SS']):
          return ticker
     if '.' in ticker:
          parts = ticker.split('.')
          if len(parts[-1]) < 2 or len(parts[-1]) > 3:
-              # print(f"Warning: Removing potentially invalid suffix from {ticker} -> {parts[0]}") # Avoid printing warnings in Streamlit app
+              # print(f"Warning: Removing potentially invalid suffix from {ticker} -> {parts[0]}")
               return parts[0]
          else:
               return ticker
@@ -317,14 +320,14 @@ if failed_tickers:
     st.warning("Failed to fetch or process data for some tickers:")
     st.json(failed_tickers) # Display as JSON for clarity
 
-# --- Auto-Refresh Logic (Temporarily Disabled for Debugging) ---
+# --- Auto-Refresh Logic ---
 refresh_interval_seconds = 3600 # Refresh every hour
-st.write(f"(Auto-refresh currently disabled for debugging. Interval was: {refresh_interval_seconds} seconds.)")
+st.write(f"Page will refresh automatically every {refresh_interval_seconds} seconds.")
 st.caption(f"Last data fetch attempt initiated around: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
-# Comment out sleep and rerun for testing:
-# time.sleep(refresh_interval_seconds)
-# st.rerun()
+# Re-enable sleep and rerun
+time.sleep(refresh_interval_seconds)
+st.rerun()
 
 # Note: For true "live" (sub-minute) updates, yfinance might not be suitable due to API rate limits
 # and the nature of free EOD data. You might need a paid, real-time data provider.

@@ -65,4 +65,5 @@ These international companies manufacture outside the U.S. and do not primarily 
 | Renault SA (RNO.PA)       | Automotive                  | Euronext Paris (France)   |
 | Geely Automobile (0175)   | Automotive                  | HKEX (Hong Kong, China) |
 | Suzuki Motor Corp. (7269) | Automotive                  | Tokyo SE (Japan)          |
-| Mahindra & Mahindra (M&M) | Diversified Manufacturing   | NSE (India)               | 
+| Mahindra & Mahindra (M&M) | Diversified Manufacturing   | NSE (India)               |
+| SAIC Motor Corp. (600104) | Automotive                  | SSE (Shanghai, China)     | 
