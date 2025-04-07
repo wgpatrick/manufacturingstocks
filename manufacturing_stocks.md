@@ -27,6 +27,11 @@ This bundle comprises U.S.-based companies that perform final assembly or manufa
 | Harley-Davidson (HOG)          | Motorcycles        | NYSE     |
 | Stryker Corp. (SYK)            | Medical Devices    | NYSE     |
 | Oshkosh Corp. (OSK)            | Specialty Vehicles | NYSE     |
+| RTX Corporation (RTX)          | Aerospace/Defense  | NYSE     |
+| Lockheed Martin (LMT)          | Aerospace/Defense  | NYSE     |
+| Northrop Grumman (NOC)         | Aerospace/Defense  | NYSE     |
+| GE Aerospace (GE)              | Aerospace/Engines  | NYSE     |
+| L3Harris (LHX)                 | Aerospace/Defense  | NYSE     |
 
 ## 3. U.S. Companies – Overseas Manufacturing for U.S. Market
 
@@ -63,6 +68,10 @@ This bundle includes foreign-based companies that manufacture outside the U.S. (
 | Nissan Motor Co. (7201)      | Automotive           | TYO (Japan), OTC (ADR)    |
 | Hyundai Motor Co. (005380)   | Automotive           | KRX (S. Korea)            |
 | Philips N.V. (PHG)           | Health Technology    | NYSE (ADR), AMS (Primary) |
+| BAE Systems (BA.)            | Aerospace/Defense    | LSE (UK), OTC (ADR)       |
+| Safran (SAF)                 | Aerospace/Engines    | EPA (France), OTC (ADR)   |
+| Rolls-Royce Holdings (RR.)   | Aerospace/Engines    | LSE (UK), OTC (ADR)       |
+| Leonardo (LDO)               | Aerospace/Defense    | BIT (Italy), OTC (ADR)    |
 
 ## 5. Non-U.S. Companies – Overseas Manufacturing, Little U.S. Market Focus
 
@@ -75,4 +84,6 @@ These international companies manufacture outside the U.S. and do not primarily 
 | Geely Automobile (0175)   | Automotive                  | HKEX (Hong Kong, China) |
 | Suzuki Motor Corp. (7269) | Automotive                  | Tokyo SE (Japan)          |
 | Mahindra & Mahindra (M&M) | Diversified Manufacturing   | NSE (India)               |
-| SAIC Motor Corp. (600104) | Automotive                  | SSE (Shanghai, China)     | 
+| SAIC Motor Corp. (600104) | Automotive                  | SSE (Shanghai, China)     |
+| Rostec (N/A)                | Defense/Technology          | N/A (State-owned)         |
+| Airbus (AIR)                 | Aerospace            | EPA (France), OTC (ADR)   | 
