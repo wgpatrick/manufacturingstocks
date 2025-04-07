@@ -71,16 +71,19 @@ def adjust_ticker_for_yfinance(ticker):
     if ticker == '0175': return '0175.HK'
     if ticker == '0992': return '0992.HK'
     if ticker == 'RNO.PA': return 'RNO.PA'
-    if ticker == '7203': return '7203.T'
-    if ticker == '7269': return '7269.T'
-    if ticker == '005930': return '005930.KS'
+    if ticker == '7203': return '7203.T' # Toyota
+    if ticker == '7269': return '7269.T' # Suzuki
+    if ticker == '7267': return '7267.T' # Honda
+    if ticker == '7201': return '7201.T' # Nissan
+    if ticker == '005930': return '005930.KS' # Samsung
+    if ticker == '005380': return '005380.KS' # Hyundai
     if ticker == 'NESN': return 'NESN.SW'
     if ticker == 'NSRGY': return 'NSRGY'
     if ticker == 'VOW3': return 'VOW3.DE'
     if ticker == 'ITX': return 'ITX.MC'
     if ticker == 'M&M': return 'M&M.NS'
     if ticker == 'RIL': return 'RELIANCE.NS'
-    if ticker == '600104': return '600104.SS' # Added SAIC Motor
+    if ticker == '600104': return '600104.SS' # SAIC Motor
 
     # If it ends with a known suffix, assume it's already correct
     if any(ticker.endswith(s) for s in ['.HK', '.PA', '.T', '.KS', '.SW', '.DE', '.MC', '.NS', '.SS']):

@@ -54,6 +54,9 @@ This bundle includes foreign-based companies that manufacture outside the U.S. (
 | Inditex (ITX)                | Apparel Retail       | BME (Madrid)              |
 | Volkswagen AG (VOW3)         | Automotive           | FWB (Germany)             |
 | Lenovo Group (0992)          | Computers/Hardware   | HKEX (Hong Kong, China) |
+| Honda Motor Co. (7267)       | Automotive           | TYO (Japan), NYSE (ADR)   |
+| Nissan Motor Co. (7201)      | Automotive           | TYO (Japan), OTC (ADR)    |
+| Hyundai Motor Co. (005380)   | Automotive           | KRX (S. Korea)            |
 
 ## 5. Non-U.S. Companies – Overseas Manufacturing, Little U.S. Market Focus
 
