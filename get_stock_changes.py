@@ -91,54 +91,73 @@ def adjust_ticker_for_yfinance(ticker):
               return ticker
     return ticker
 
-# Cache the price fetching for each ticker for a shorter duration (e.g., 15 mins)
+# Cache the price fetching for each ticker
 @st.cache_data(ttl=900)
 def get_stock_data_for_ticker(adjusted_ticker):
     """Fetches historical data for a single ticker and calculates changes."""
-    print(f"Fetching data for {adjusted_ticker}...") # See when network requests happen
-    stock = yf.Ticker(adjusted_ticker)
+    print(f"Fetching data for {adjusted_ticker}...")
+    stock_info = None
+    stock = None
 
-    # Get info - might fail for some tickers, handle gracefully
+    # --- Try initializing Ticker and getting info --- 
     try:
-        info = stock.info
-        if not info or (info.get('marketState') is None and info.get('regularMarketPrice') is None):
-            print(f"Skipping {adjusted_ticker} (invalid/missing essential market data)")
-            return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Invalid/Missing Info"}
+        stock = yf.Ticker(adjusted_ticker)
+        # Some tickers might exist but have no info immediately available
+        # Give it a short time before failing
+        stock_info = stock.info 
+        # Check essential data points
+        if not stock_info or (stock_info.get('marketState') is None and stock_info.get('regularMarketPrice') is None and stock_info.get('currency') is None):
+             print(f"Skipping {adjusted_ticker} (invalid/missing essential market data in info)")
+             return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Invalid/Missing Info"}
+
     except Exception as e:
-        print(f"Failed to get info for {adjusted_ticker}. Error: {type(e).__name__}: {e}")
+        print(f"Failed to initialize or get info for {adjusted_ticker}. Error: {type(e).__name__}: {e}")
+        # Ensure stock is None if Ticker() failed
+        stock = None 
+        # Return error immediately if info fetch fails
         return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": f"Info Fetch Error: {e}"}
 
-    # Calculate target dates (relative to now)
-    # Use timezone-aware current time
-    now_aware = datetime.now(timezone.utc)
-    today_date = now_aware.date()
-    # Use pandas offsets correctly with timezone-aware time
-    date_5d_ago = (pd.to_datetime(now_aware) - BDay(5)).date()
-    date_1mo_ago = (pd.to_datetime(now_aware) - DateOffset(months=1)).date()
+    # --- If Info fetch succeeded, try fetching history --- 
+    # Check if stock object exists (it should if info succeeded, but double-check)
+    if stock is None:
+         print(f"Error: Stock object is None for {adjusted_ticker} despite info check passing?!")
+         return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Internal State Error"}
+         
+    try:
+        # Calculate target dates (relative to now, timezone-aware)
+        now_aware = datetime.now(timezone.utc)
+        today_date = now_aware.date()
+        date_5d_ago = (pd.to_datetime(now_aware) - BDay(5)).date()
+        date_1mo_ago = (pd.to_datetime(now_aware) - DateOffset(months=1)).date()
 
-    price_today = get_closest_price_yf(stock, today_date)
-    price_5d = get_closest_price_yf(stock, date_5d_ago)
-    price_1mo = get_closest_price_yf(stock, date_1mo_ago)
+        price_today = get_closest_price_yf(stock, today_date)
+        price_5d = get_closest_price_yf(stock, date_5d_ago)
+        price_1mo = get_closest_price_yf(stock, date_1mo_ago)
+        
+        # --- Calculate Changes --- 
+        change_5d_pct = None
+        change_1mo_pct = None
+        if price_today is not None and price_5d is not None:
+            if price_5d != 0: change_5d_pct = ((price_today - price_5d) / price_5d) * 100
+            elif price_today == 0: change_5d_pct = 0.0
+            else: change_5d_pct = float('inf')
+        if price_today is not None and price_1mo is not None:
+            if price_1mo != 0: change_1mo_pct = ((price_today - price_1mo) / price_1mo) * 100
+            elif price_today == 0: change_1mo_pct = 0.0
+            else: change_1mo_pct = float('inf')
 
-    change_5d_pct = None
-    change_1mo_pct = None
-    if price_today is not None and price_5d is not None:
-        if price_5d != 0: change_5d_pct = ((price_today - price_5d) / price_5d) * 100
-        elif price_today == 0: change_5d_pct = 0.0
-        else: change_5d_pct = float('inf')
-    if price_today is not None and price_1mo is not None:
-        if price_1mo != 0: change_1mo_pct = ((price_today - price_1mo) / price_1mo) * 100
-        elif price_today == 0: change_1mo_pct = 0.0
-        else: change_1mo_pct = float('inf')
-
-    return {
-        "today_price": price_today,
-        "5d_ago_price": price_5d,
-        "1mo_ago_price": price_1mo,
-        "change_5d": change_5d_pct,
-        "change_1mo": change_1mo_pct,
-        "error": None # Indicate success
-    }
+        return {
+            "today_price": price_today,
+            "5d_ago_price": price_5d,
+            "1mo_ago_price": price_1mo,
+            "change_5d": change_5d_pct,
+            "change_1mo": change_1mo_pct,
+            "error": None # Indicate success
+        }
+        
+    except Exception as e:
+        print(f"Failed to get price history for {adjusted_ticker}. Error: {type(e).__name__}: {e}")
+        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": f"History Fetch Error: {e}"}
 
 def get_closest_price_yf(ticker_obj, target_date):
     """Gets the closing price for the closest trading day on or before the target date."""
