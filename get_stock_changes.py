@@ -303,26 +303,18 @@ for category_name, company_data_list in all_data.items():
     if category_display_list:
         category_df = pd.DataFrame(category_display_list).set_index("Company Name")
         
-        # --- Explicitly set dtype to object for columns that might contain error strings ---
-        try:
-            category_df['Current Price'] = category_df['Current Price'].astype(object)
-            category_df['5d Change (%)'] = category_df['5d Change (%)'].astype(object)
-            category_df['1mo Change (%)'] = category_df['1mo Change (%)'].astype(object)
-        except Exception as e:
-            st.error(f"Error converting column types for category '{category_name}': {e}")
-            # Continue without conversion if it fails, might still hit Arrow error
-
-        # Apply formatting, including error display
-        st.dataframe(
-            category_df.style
-            .applymap(style_negative_red, subset=["5d Change (%)", "1mo Change (%)"])
+        # Apply styling and formatting together
+        styler = category_df.style \
+            .applymap(style_negative_red, subset=["5d Change (%)", "1mo Change (%)"]) \
             .format({
-                "Current Price": lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else str(x), # Format price or show error string
-                "5d Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else str(x),
-                "1mo Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else str(x)
-            }, na_rep="N/A"),
-            use_container_width=True
-        )
+                # Use a robust lambda that handles numbers, None, and existing strings (errors)
+                "Current Price": lambda x: f"{x:.2f}" if isinstance(x, (int, float)) else ('N/A' if pd.isna(x) else str(x)), 
+                "5d Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else ('N/A' if pd.isna(x) else str(x)),
+                "1mo Change (%)": lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else ('N/A' if pd.isna(x) else str(x))
+            }, na_rep="N/A") # na_rep might be redundant now but keep for safety
+
+        # Display the styled and formatted DataFrame
+        st.dataframe(styler, use_container_width=True)
     else:
         st.write("No companies listed in this category.")
 
