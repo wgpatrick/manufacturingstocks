@@ -111,11 +111,13 @@ def get_stock_data_for_ticker(adjusted_ticker):
              return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": "Invalid/Missing Info"}
 
     except Exception as e:
-        print(f"Failed to initialize or get info for {adjusted_ticker}. Error: {type(e).__name__}: {e}")
-        # Ensure stock is None if Ticker() failed
+        # Simpler error reporting for robustness
+        error_message = f"Info Fetch Error: {type(e).__name__}" 
+        if hasattr(e, 'args') and e.args:
+            error_message += f" - {e.args[0]}" # Add first arg if available
+        print(f"Failed to initialize or get info for {adjusted_ticker}. Error: {error_message}")
         stock = None 
-        # Return error immediately if info fetch fails
-        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": f"Info Fetch Error: {e}"}
+        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
 
     # --- If Info fetch succeeded, try fetching history --- 
     # Check if stock object exists (it should if info succeeded, but double-check)
@@ -156,8 +158,12 @@ def get_stock_data_for_ticker(adjusted_ticker):
         }
         
     except Exception as e:
-        print(f"Failed to get price history for {adjusted_ticker}. Error: {type(e).__name__}: {e}")
-        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": f"History Fetch Error: {e}"}
+        # Simpler error reporting for robustness
+        error_message = f"History Fetch Error: {type(e).__name__}"
+        if hasattr(e, 'args') and e.args:
+            error_message += f" - {e.args[0]}"
+        print(f"Failed to get price history for {adjusted_ticker}. Error: {error_message}")
+        return {"today_price": None, "5d_ago_price": None, "1mo_ago_price": None, "change_5d": None, "change_1mo": None, "error": error_message}
 
 def get_closest_price_yf(ticker_obj, target_date):
     """Gets the closing price for the closest trading day on or before the target date."""
@@ -311,14 +317,14 @@ if failed_tickers:
     st.warning("Failed to fetch or process data for some tickers:")
     st.json(failed_tickers) # Display as JSON for clarity
 
-# --- Auto-Refresh Logic ---
-# Simple timer-based refresh every N seconds
+# --- Auto-Refresh Logic (Temporarily Disabled for Debugging) ---
 refresh_interval_seconds = 3600 # Refresh every hour
-st.write(f"Page will refresh automatically every {refresh_interval_seconds} seconds.")
+st.write(f"(Auto-refresh currently disabled for debugging. Interval was: {refresh_interval_seconds} seconds.)")
 st.caption(f"Last data fetch attempt initiated around: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
-time.sleep(refresh_interval_seconds)
-st.rerun()
+# Comment out sleep and rerun for testing:
+# time.sleep(refresh_interval_seconds)
+# st.rerun()
 
 # Note: For true "live" (sub-minute) updates, yfinance might not be suitable due to API rate limits
 # and the nature of free EOD data. You might need a paid, real-time data provider.
