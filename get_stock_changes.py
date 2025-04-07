@@ -343,14 +343,9 @@ if failed_tickers:
     st.warning("Failed to fetch or process data for some tickers:")
     st.json(failed_tickers) # Display as JSON for clarity
 
-# --- Auto-Refresh Logic ---
-refresh_interval_seconds = 3600 # Refresh every hour
-st.write(f"Page will refresh automatically every {refresh_interval_seconds} seconds.")
-st.caption(f"Last data fetch attempt initiated around: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
-
-# Re-enable sleep and rerun
-time.sleep(refresh_interval_seconds)
-st.rerun()
+# --- Auto-Refresh Logic (Removed - Relying on Cache TTL) ---
+st.caption(f"Stock data cache TTL: 900s | Markdown cache TTL: 3600s")
+st.caption(f"Page last loaded/executed: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S %Z')}")
 
 # Note: For true "live" (sub-minute) updates, yfinance might not be suitable due to API rate limits
 # and the nature of free EOD data. You might need a paid, real-time data provider.
