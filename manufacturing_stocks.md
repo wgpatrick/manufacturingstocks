@@ -60,8 +60,6 @@ This bundle includes foreign-based companies that manufacture outside the U.S. (
 | Toyota Motor Corp. (7203)    | Automotive           | TYO (Japan)               |
 | Samsung Electronics (005930) | Consumer Electronics | KRX (S. Korea)            |
 | Nestlé S.A. (NESN)           | Food & Beverage      | SIX (Switzerland)         |
-| Unilever PLC (UL)            | Consumer Products    | LSE (London), NYSE (ADR)  |
-| Inditex (ITX)                | Apparel Retail       | BME (Madrid)              |
 | Volkswagen AG (VOW3)         | Automotive           | FWB (Germany)             |
 | Lenovo Group (0992)          | Computers/Hardware   | HKEX (Hong Kong, China) |
 | Honda Motor Co. (7267)       | Automotive           | TYO (Japan), NYSE (ADR)   |
@@ -85,5 +83,6 @@ These international companies manufacture outside the U.S. and do not primarily 
 | Suzuki Motor Corp. (7269) | Automotive                  | Tokyo SE (Japan)          |
 | Mahindra & Mahindra (M&M) | Diversified Manufacturing   | NSE (India)               |
 | SAIC Motor Corp. (600104) | Automotive                  | SSE (Shanghai, China)     |
-| Rostec (N/A)                | Defense/Technology          | N/A (State-owned)         |
-| Airbus (AIR)                 | Aerospace            | EPA (France), OTC (ADR)   | 
+| Airbus (AIR)                 | Aerospace            | EPA (France), OTC (ADR)   |
+| Unilever PLC (UL)            | Consumer Products    | LSE (London), NYSE (ADR)  |
+| Inditex (ITX)                | Apparel Retail       | BME (Madrid)              | 
