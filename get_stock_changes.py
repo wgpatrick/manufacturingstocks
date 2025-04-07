@@ -65,36 +65,56 @@ def parse_categories_and_tickers(filename="manufacturing_stocks.md"):
 def adjust_ticker_for_yfinance(ticker):
     """Attempts to adjust ticker formats for yfinance compatibility."""
     # Note: This function is simple, caching might be overkill but harmless
+    # --- Hong Kong ---
     if ticker == '1211': return '1211.HK'
     if ticker == '1211.HK': return '1211.HK'
     if ticker == '0700.HK': return '0700.HK'
     if ticker == '0175': return '0175.HK'
     if ticker == '0992': return '0992.HK'
+    # --- Europe (Euronext Paris) ---
     if ticker == 'RNO.PA': return 'RNO.PA'
+    if ticker == 'AIR': return 'AIR.PA' # Airbus
+    if ticker == 'SAF': return 'SAF.PA' # Safran
+    # --- Japan (Tokyo) ---
     if ticker == '7203': return '7203.T' # Toyota
     if ticker == '7269': return '7269.T' # Suzuki
     if ticker == '7267': return '7267.T' # Honda
     if ticker == '7201': return '7201.T' # Nissan
+    # --- Korea (KRX) ---
     if ticker == '005930': return '005930.KS' # Samsung
     if ticker == '005380': return '005380.KS' # Hyundai
+    # --- Switzerland (SIX) ---
     if ticker == 'NESN': return 'NESN.SW'
-    if ticker == 'NSRGY': return 'NSRGY'
+    # --- Germany (Deutsche Boerse) ---
     if ticker == 'VOW3': return 'VOW3.DE'
+    # --- Spain (Madrid) ---
     if ticker == 'ITX': return 'ITX.MC'
+    # --- India (NSE) ---
     if ticker == 'M&M': return 'M&M.NS'
     if ticker == 'RIL': return 'RELIANCE.NS'
+    # --- China (Shanghai) ---
     if ticker == '600104': return '600104.SS' # SAIC Motor
+    # --- UK (LSE) ---
+    if ticker == 'BA.': return 'BA.L' # BAE Systems
+    if ticker == 'RR.': return 'RR.L' # Rolls-Royce
+    # --- Italy (Borsa Italiana) ---
+    if ticker == 'LDO': return 'LDO.MI' # Leonardo
+    # --- US ADRs (These often work directly) ---
+    if ticker == 'NSRGY': return 'NSRGY'
+    if ticker == 'PHG': return 'PHG'
 
     # If it ends with a known suffix, assume it's already correct
-    if any(ticker.endswith(s) for s in ['.HK', '.PA', '.T', '.KS', '.SW', '.DE', '.MC', '.NS', '.SS']):
+    known_suffixes = ['.HK', '.PA', '.T', '.KS', '.SW', '.DE', '.MC', '.NS', '.SS', '.L', '.MI']
+    if any(ticker.endswith(s) for s in known_suffixes):
          return ticker
     if '.' in ticker:
          parts = ticker.split('.')
-         if len(parts[-1]) < 2 or len(parts[-1]) > 3:
+         if len(parts[-1]) < 1 or len(parts[-1]) > 3: # Allow 1-char suffix like .L
               # print(f"Warning: Removing potentially invalid suffix from {ticker} -> {parts[0]}")
               return parts[0]
          else:
               return ticker
+    # Default: Assume US ticker (e.g., RTX, LMT, NOC, GE, LHX, BA, ABT, JNJ etc.)
     return ticker
 
 # Cache the price fetching for each ticker
